@@ -46,9 +46,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default:
         "https://static.vecteezy.com/system/resources/thumbnails/048/334/475/small/a-person-icon-on-a-transparent-background-png.png",
-      validate(value) {
-        if (!validator.isDataURI(value)) throw Error("url is not valid");
-      },
+      // validate(value) {
+      //   console.log(value);
+      //   if (value.length && !validator.isDataURI(value))
+      //     throw Error("url is not valid");
+      // },
     },
     // isDataURI
 

@@ -3,16 +3,24 @@ const bodyParser = require("body-parser");
 const app = express();
 const connect_db = require("./config/database");
 const User = require("./models/user");
-const validator = require("validator");
+const validateSignup = require("./utils/validation");
+const bcrypt = require("bcryptjs");
 
 app.use(bodyParser.json());
 
 // signup
 app.post("/signup", async (req, res) => {
-  // console.log(req.body);
-  // Create a new instance
-  const userObj = new User(req.body);
+  // validation
+
   try {
+    validateSignup(req);
+    // hash the password
+    let { password } = req.body;
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    req.body.password = passwordHash;
+
+    const userObj = new User(req.body); // Create a new instance
     await userObj.save();
     res.status(201).send(userObj);
   } catch (error) {
@@ -20,6 +28,23 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    const data = await User.findOne({ emailId: emailId });
+    if (!data) {
+      throw new Error("Invalid email");
+    }
+    const isCorrectPassword = await bcrypt.compare(password, data.password);
+    if (isCorrectPassword) res.status(200).send("User is logged In");
+    else {
+      throw new Error("Invalid email or password ");
+    }
+  } catch (error) {
+    res.status(400).send("" + error);
+  }
+});
 // getUsersByEmail
 app.get("/user", async (req, res) => {
   try {
@@ -65,7 +90,6 @@ app.patch("/user/:userId", async (req, res) => {
     const isValidUpdate = (data) => {
       return data.every((it) => allowedUpdates.includes(it));
     };
-
     if (!isValidUpdate) throw new Error("Update Not allowed");
     if (data?.skills.length > 10) throw new Error("Too many skills ");
 
