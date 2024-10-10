@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const { SALT } = require("../config/config");
+var jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -64,4 +67,31 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+userSchema.methods.getJWT = async function () {
+  const user = this;
+
+  const payload = {
+    userId: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+  };
+
+  try {
+    const token = await jwt.sign(payload, SALT, { expiresIn: "1h" });
+    return token;
+  } catch (error) {
+    console.error("Error generating JWT:", error);
+    throw new Error("Error generating JWT");
+  }
+};
+userSchema.methods.validatePassword = async function (paswordInp) {
+  const user = this;
+  const passwordHash = user.password;
+  try {
+    const isCorrectPassword = await bcrypt.compare(paswordInp, passwordHash);
+    return isCorrectPassword;
+  } catch (error) {
+    throw new Error("Invalid email or password ");
+  }
+};
 module.exports = mongoose.model("User", userSchema);

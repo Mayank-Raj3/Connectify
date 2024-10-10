@@ -5,9 +5,12 @@ const connect_db = require("./config/database");
 const User = require("./models/user");
 const validateSignup = require("./utils/validation");
 const bcrypt = require("bcryptjs");
+const cookieParser = require("cookie-parser");
+
+const { userAuth } = require("./middlewares/auth");
 
 app.use(bodyParser.json());
-
+app.use(cookieParser());
 // signup
 app.post("/signup", async (req, res) => {
   // validation
@@ -32,19 +35,39 @@ app.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    const data = await User.findOne({ emailId: emailId });
-    if (!data) {
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
       throw new Error("Invalid email");
     }
-    const isCorrectPassword = await bcrypt.compare(password, data.password);
-    if (isCorrectPassword) res.status(200).send("User is logged In");
-    else {
+    const isCorrectPassword = await user.validatePassword(password);
+    if (isCorrectPassword) {
+      const token = await user.getJWT();
+      res.cookie("token", token);
+      res.status(200).send("User is logged In");
+    } else {
       throw new Error("Invalid email or password ");
     }
   } catch (error) {
     res.status(400).send("" + error);
   }
 });
+
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    res.send(req.user);
+  } catch (error) {
+    res.status(404).send(error);
+  }
+});
+
+app.post("/sendconnectionReq", userAuth, async (req, res) => {
+  try {
+    res.send("Sending connection Requests");
+  } catch (error) {
+    res.status(404).send(error);
+  }
+});
+
 // getUsersByEmail
 app.get("/user", async (req, res) => {
   try {
