@@ -1,23 +1,65 @@
 const mongoose = require("mongoose");
-const userSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
+const validator = require("validator");
+
+const userSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+      min: 3,
+      max: 40,
+    },
+    lastName: {
+      type: String,
+      min: 3,
+      max: 40,
+    },
+    emailId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("email is not valid");
+        }
+      },
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    age: {
+      type: Number,
+      min: 18,
+    },
+    gender: {
+      type: String,
+      validate(value) {
+        if (!["male", "female", "others"].includes(value)) {
+          throw new Error("Gender is not valid");
+        }
+      },
+    },
+    photoUrl: {
+      type: String,
+      default:
+        "https://static.vecteezy.com/system/resources/thumbnails/048/334/475/small/a-person-icon-on-a-transparent-background-png.png",
+      validate(value) {
+        if (!validator.isDataURI(value)) throw Error("url is not valid");
+      },
+    },
+    // isDataURI
+
+    about: {
+      type: String,
+    },
+    skills: {
+      type: [String],
+    },
   },
-  lastName: {
-    type: String,
-  },
-  emailId: {
-    type: String,
-  },
-  password: {
-    type: String,
-  },
-  age: {
-    type: Number,
-  },
-  gender: {
-    type: String,
-  },
-});
+  { timestamps: true }
+);
 
 module.exports = mongoose.model("User", userSchema);
