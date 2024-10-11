@@ -2,129 +2,17 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const connect_db = require("./config/database");
-const User = require("./models/user");
-const validateSignup = require("./utils/validation");
-const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
-
-const { userAuth } = require("./middlewares/auth");
-
 app.use(bodyParser.json());
 app.use(cookieParser());
-// signup
-app.post("/signup", async (req, res) => {
-  // validation
 
-  try {
-    validateSignup(req);
-    // hash the password
-    let { password } = req.body;
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-    req.body.password = passwordHash;
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestsRouter = require("./routes/requests");
 
-    const userObj = new User(req.body); // Create a new instance
-    await userObj.save();
-    res.status(201).send(userObj);
-  } catch (error) {
-    res.status(400).send({ error: "Error saving user" + error });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const { emailId, password } = req.body;
-
-    const user = await User.findOne({ emailId: emailId });
-    if (!user) {
-      throw new Error("Invalid email");
-    }
-    const isCorrectPassword = await user.validatePassword(password);
-    if (isCorrectPassword) {
-      const token = await user.getJWT();
-      res.cookie("token", token);
-      res.status(200).send("User is logged In");
-    } else {
-      throw new Error("Invalid email or password ");
-    }
-  } catch (error) {
-    res.status(400).send("" + error);
-  }
-});
-
-app.get("/profile", userAuth, async (req, res) => {
-  try {
-    res.send(req.user);
-  } catch (error) {
-    res.status(404).send(error);
-  }
-});
-
-app.post("/sendconnectionReq", userAuth, async (req, res) => {
-  try {
-    res.send("Sending connection Requests");
-  } catch (error) {
-    res.status(404).send(error);
-  }
-});
-
-// getUsersByEmail
-app.get("/user", async (req, res) => {
-  try {
-    const data = await User.findOne({ emailId: req.body.emailId });
-    if (!data) {
-      res.send("No user found");
-    }
-    res.send(data);
-  } catch (error) {
-    res.status(500).send("Error fetching the data ");
-  }
-});
-
-// getAllusers
-app.get("/user", async (req, res) => {
-  try {
-    const data = await User.find();
-    res.send(data);
-  } catch (error) {
-    res.status(500).send("Error fetching the data ");
-  }
-});
-
-// deleteByuserId
-app.delete("/user", async (req, res) => {
-  console.log("hit");
-  try {
-    const data = await User.findByIdAndDelete({ _id: req.body.userId });
-    if (!data) {
-      res.send("No user found");
-    }
-    res.send("User data deleted Sucessfully...");
-  } catch (error) {
-    res.status(500).send("Error deleting the data " + error);
-  }
-});
-
-app.patch("/user/:userId", async (req, res) => {
-  const data = req.body;
-  const userId = req.params.userId;
-  try {
-    const allowedUpdates = ["password", "photoUrl", "about", "skills"];
-    const isValidUpdate = (data) => {
-      return data.every((it) => allowedUpdates.includes(it));
-    };
-    if (!isValidUpdate) throw new Error("Update Not allowed");
-    if (data?.skills.length > 10) throw new Error("Too many skills ");
-
-    await User.findByIdAndUpdate(userId, data, {
-      returnDocument: "after",
-      runValidators: true,
-    });
-    res.status(201).send("User Successfully Updated");
-  } catch (error) {
-    res.status(500).send("Error Updating the data " + error);
-  }
-});
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestsRouter);
 
 app.listen(3000, () => {
   console.log("Running the server");

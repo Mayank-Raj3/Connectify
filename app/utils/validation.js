@@ -17,4 +17,18 @@ const validateSignup = (req) => {
   }
 };
 
-module.exports = validateSignup;
+const validateEditProfile = (data) => {
+  console.log(data);
+  const allowedUpdates = ["photoUrl", "about", "skills"];
+  const isValidUpdate = Object.keys(data).every((key) =>
+    allowedUpdates.includes(key)
+  );
+
+  if (!isValidUpdate) throw new Error("Update Not allowed");
+  if (data.skills && data.skills.length > 10)
+    throw new Error("Too many skills");
+
+  return true;
+};
+
+module.exports = { validateSignup, validateEditProfile };
