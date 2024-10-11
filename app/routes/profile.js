@@ -17,11 +17,11 @@ router.get("/profile/view", userAuth, async (req, res) => {
 router.patch("/profile/edit", userAuth, async (req, res) => {
   const data = req.body;
   const userId = req.user._id;
-  const userIdString = userId.toString();
+
   try {
     if (!validateEditProfile(data)) throw new Error("Update Not allowed");
 
-    await User.findByIdAndUpdate(userIdString, data, {
+    await User.findByIdAndUpdate(userId, data, {
       returnDocument: "after",
       runValidators: true,
     });
@@ -41,7 +41,7 @@ router.patch("/profile/password", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
     const data = await User.findByIdAndUpdate(user._id, {
-      password: password,
+      password: passwordHash,
     });
     res.status(201).json({ message: "User password successfully updated" });
   } catch (error) {

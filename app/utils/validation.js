@@ -1,4 +1,6 @@
 const validator = require("validator");
+const user = require("../models/user");
+const connectionReqModel = require("../models/connectionReq");
 
 const validateSignup = (req) => {
   const { firstName, lastName, emailId, password } = req.body;
@@ -31,4 +33,41 @@ const validateEditProfile = (data) => {
   return true;
 };
 
-module.exports = { validateSignup, validateEditProfile };
+const validateSendConnections = async (fromUserId, toUserId, status) => {
+  try {
+    const allowedStatus = ["ignore", "interested"];
+    if (!allowedStatus.includes(status)) {
+      throw new Error(`Invalid status type: ${status}`);
+    }
+
+    if (fromUserId.toString() === toUserId) {
+      throw new Error("Not allowed to send a request to yourself");
+    }
+
+    const isValidtoUserId = await user.findOne({ toUserId });
+    if (!isValidtoUserId) {
+      throw new Error("User not present");
+    }
+
+    const existingConnectionReq = await connectionReqModel.findOne({
+      $or: [
+        { fromUserId, toUserId },
+        { fromUserId: toUserId, toUserId: fromUserId },
+      ],
+    });
+
+    if (existingConnectionReq) {
+      throw new Error("Connection request already exists");
+    }
+  } catch (error) {
+    return error;
+  }
+
+  return 0;
+};
+
+module.exports = {
+  validateSignup,
+  validateEditProfile,
+  validateSendConnections,
+};
