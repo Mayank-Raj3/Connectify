@@ -35,6 +35,7 @@ const validateEditProfile = (data) => {
 
 const validateSendConnections = async (fromUserId, toUserId, status) => {
   try {
+    console.log(fromUserId);
     const allowedStatus = ["ignore", "interested"];
     if (!allowedStatus.includes(status)) {
       throw new Error(`Invalid status type: ${status}`);
@@ -44,7 +45,7 @@ const validateSendConnections = async (fromUserId, toUserId, status) => {
       throw new Error("Not allowed to send a request to yourself");
     }
 
-    const isValidtoUserId = await user.findOne({ toUserId });
+    const isValidtoUserId = await user.findOne({ _id: toUserId });
     if (!isValidtoUserId) {
       throw new Error("User not present");
     }
@@ -66,8 +67,19 @@ const validateSendConnections = async (fromUserId, toUserId, status) => {
   return 0;
 };
 
+const validateReviewConnections = async (reqId, logedInuserId, status) => {
+  try {
+    // correct status code
+  } catch (error) {
+    return error;
+  }
+
+  return 0;
+};
+
 module.exports = {
   validateSignup,
   validateEditProfile,
   validateSendConnections,
+  validateReviewConnections,
 };
