@@ -24,7 +24,7 @@ router.get("/user/requests/recived", userAuth, async (req, res) => {
 
     res.json({ message: "requests recived sucessfully ", data });
   } catch (error) {
-    console.log(error);
+    res.json({ message: "Something Went Wrong " + error });
   }
 });
 router.get("/user/connections", userAuth, async (req, res) => {
@@ -53,6 +53,44 @@ router.get("/user/connections", userAuth, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error });
+  }
+});
+
+// feed/?page=1&?limit=2
+router.get("/feed", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
+
+    const connectionRequests = await connectionReqModel
+      .find({
+        $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+      })
+      .select("fromUserId  toUserId");
+
+    const hideUsersFromFeed = new Set();
+    connectionRequests.forEach((req) => {
+      hideUsersFromFeed.add(req.fromUserId.toString());
+      hideUsersFromFeed.add(req.toUserId.toString());
+    });
+
+    const users = await User.find({
+      $and: [
+        { _id: { $nin: Array.from(hideUsersFromFeed) } },
+        { _id: { $ne: loggedInUser._id } },
+      ],
+    })
+      .select(USER_SAFE_DATA)
+      .skip(skip)
+      .limit(limit);
+
+    res.json({ data: users });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 

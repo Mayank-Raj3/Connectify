@@ -20,7 +20,6 @@ const validateSignup = (req) => {
 };
 
 const validateEditProfile = (data) => {
-  console.log(data);
   const allowedUpdates = ["photoUrl", "about", "skills"];
   const isValidUpdate = Object.keys(data).every((key) =>
     allowedUpdates.includes(key)
@@ -35,7 +34,6 @@ const validateEditProfile = (data) => {
 
 const validateSendConnections = async (fromUserId, toUserId, status) => {
   try {
-    console.log(fromUserId);
     const allowedStatus = ["ignore", "interested"];
     if (!allowedStatus.includes(status)) {
       throw new Error(`Invalid status type: ${status}`);

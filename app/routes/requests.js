@@ -41,13 +41,11 @@ router.post("/req/review/:status/:reqId", userAuth, async (req, res, next) => {
     if (!allowedStatus.includes(status)) {
       throw new Error(`Invalid status type: ${status}`);
     }
-    console.log(loggedInUserId);
     const connectionReqObj = await connectionReqModel.findOne({
       _id: reqId,
       toUserId: loggedInUserId._id,
       status: "interested",
     });
-    console.log(connectionReqObj);
 
     if (!connectionReqObj) {
       throw new Error("Invalid connection request");
