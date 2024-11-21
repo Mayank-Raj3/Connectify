@@ -55,8 +55,7 @@ router.get("/user/connections", userAuth, async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 });
-
-// feed/?page=1&?limit=2
+// feed/?page=1&limit=2
 router.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
