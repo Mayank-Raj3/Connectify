@@ -17,7 +17,13 @@ const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestsRouter = require("./routes/requests");
 const userRouter = require("./routes/user");
-
+app.get("/home", () => {
+  try {
+    res.status(201).send({ message: "done" });
+  } catch (error) {
+    res.status(400).send({ error: "Error getting user" + error });
+  }
+});
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestsRouter);
